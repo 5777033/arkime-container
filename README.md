@@ -106,11 +106,13 @@ docker run -d \
 by default, `arkime-supervisor` will download 4 files on startup: `ipv4-address-space.csv`, `manuf`, `GeoLite2-Country.mmdb` and `GeoLite2-ASN.mmdb`. `ipv4-address-space.csv`, `manuf` are considered static and not subject to many changes, so `arkime-supervisor` will not try to keep them up to date automatically, but `GeoLite2-Country.mmdb` and `GeoLite2-ASN.mmdb` can be re-fetched by setting geoLiteRefreshInterval to any positive time duration. Default is 1 week (168 hours). 
 
 
+
+
 `arkime-supervisor` will check on viewer and capture process every 5 seconds to see if they're still running and if they've exited, it tries to restart them. 
 
 Add User
 ```sh
-docker exec -it arkime /opt/arkime/bin/arkime_add_user.sh jensen "Jensen User" Jensen@2030 --admin
+docker exec -it arkime /opt/arkime/bin/arkime_add_user.sh test "Test User" test123 --admin
 ```
 full list of options:
 
