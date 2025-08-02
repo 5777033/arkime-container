@@ -199,7 +199,7 @@ json
 
 
 
-full list of options:
+#full list of options:
 
 
 [//]: <> (start of command line options)
