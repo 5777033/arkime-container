@@ -4,8 +4,43 @@
 
 Arkime is a large scale, open source, indexed packet capture and search tool ([website](https://arkime.com))
 
-This tiny project aims to bring Arkime's powerful abilities to the cloud native world. `arkime-supervisor` is a Golang daemon running both capture and viewer functionality of Arkime and pulls logs from both viewer and capture processes into the containers `stdout`. It also handles initial Elasticsearch/Opensearch index creation, optionally adds default credentials and downloads necessery definition files to help Arkime work with no direct intraction with the container itself.
+## Run build with a configuration images file
 
+```sh
+docker build -t arkime-container:v5.4 .
+```
+
+*IMPORTANT NOTE*: current implementation does not support anything otuside the `[default]` section for the `.ini` file and will throw an error if there's anything else other than the `[default]` section is present. 
+
+## Run with command line arguments
+
+`arkime-supervisor` also supports command line arguments as well as Environment variables to set most common commands into an Arkime-compatible `.ini` file on container's startup, so the user won't have to deal with managing an extra `ini` file dynamically.
+
+```sh
+docker run -d \
+  --net host \
+  --name arkime \
+  --volume ./data/raw:/opt/arkime/raw \
+  --volume ./data/etc/config.ini:/opt/arkime/etc/config.ini:ro \
+  arkime-container:v5.4 \
+  --passwordSecret=admin12345 \
+  --elasticsearch=http://localhost:9200 \
+  --interface=any \
+  --viewPort=8006 \
+  --viewHost=0.0.0.0 \
+  --createAdminUser=true
+```
+
+
+by default, `arkime-supervisor` will download 4 files on startup: `ipv4-address-space.csv`, `manuf`, `GeoLite2-Country.mmdb` and `GeoLite2-ASN.mmdb`. `ipv4-address-space.csv`, `manuf` are considered static and not subject to many changes, so `arkime-supervisor` will not try to keep them up to date automatically, but `GeoLite2-Country.mmdb` and `GeoLite2-ASN.mmdb` can be re-fetched by setting geoLiteRefreshInterval to any positive time duration. Default is 1 week (168 hours). 
+
+
+`arkime-supervisor` will check on viewer and capture process every 5 seconds to see if they're still running and if they've exited, it tries to restart them. 
+
+Add User
+```sh
+docker exec -it arkime /opt/arkime/bin/arkime_add_user.sh jensen "Jensen User" Jensen@2030 --admin
+```
 full list of options:
 
 [//]: <> (start of command line options)
@@ -465,49 +500,7 @@ general:
       --geoLiteRefreshInterval=      Auto re-download interval for
                                      GeoLite2CountryURL and GeoLite2ASNURL
                                      (default: 168h)
-                                     [$ARKIME_GEOLITEREFRESHINTERVAL]
+                                     [$ARKIME_GEOLITEREFRESHINTERVAL]  
 ```
 [//]: <> (end of command line options)
-
-## Run with a configuration file
-
-`arkime-supervisor` can pass on a user-provided `ini` config file to the container, something like this:
-
-```sh
-docker build -t arkime-container:v5.4 .
-```
-
-*IMPORTANT NOTE*: current implementation does not support anything otuside the `[default]` section for the `.ini` file and will throw an error if there's anything else other than the `[default]` section is present. 
-
-## Run with command line arguments
-
-`arkime-supervisor` also supports command line arguments as well as Environment variables to set most common commands into an Arkime-compatible `.ini` file on container's startup, so the user won't have to deal with managing an extra `ini` file dynamically.
-
-```sh
-docker run -d \
-  --net host \
-  --name arkime \
-  --volume ./data/raw:/opt/arkime/raw \
-  --volume ./data/etc/config.ini:/opt/arkime/etc/config.ini:ro \
-  arkime-container:v5.4 \
-  --passwordSecret=admin12345 \
-  --elasticsearch=http://localhost:9200 \
-  --interface=any \
-  --viewPort=8006 \
-  --viewHost=0.0.0.0 \
-  --createAdminUser=true
-```
-
-
-by default, `arkime-supervisor` will download 4 files on startup: `ipv4-address-space.csv`, `manuf`, `GeoLite2-Country.mmdb` and `GeoLite2-ASN.mmdb`. `ipv4-address-space.csv`, `manuf` are considered static and not subject to many changes, so `arkime-supervisor` will not try to keep them up to date automatically, but `GeoLite2-Country.mmdb` and `GeoLite2-ASN.mmdb` can be re-fetched by setting geoLiteRefreshInterval to any positive time duration. Default is 1 week (168 hours). 
-
-
-
-
-`arkime-supervisor` will check on viewer and capture process every 5 seconds to see if they're still running and if they've exited, it tries to restart them. 
-
-Add User
-```sh
-docker exec -it arkime /opt/arkime/bin/arkime_add_user.sh jensen "Jensen User" Jensen@2030 --admin
-```
 
