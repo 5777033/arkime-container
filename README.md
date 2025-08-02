@@ -170,7 +170,37 @@ initial DB  && Add User
 /opt/arkime/db/db.pl http://localhost:9200 init
 /opt/arkime/bin/arkime_add_user.sh jensen "Jensen User" Jensen@2030 --admin
 ```
+**1️⃣ 检查 Arkime 索引是否初始化成功**
+---------------------------
+
+Arkime 初始化成功后，会在 OpenSearch 中创建一系列索引（例如 `arkime_sessions3-*`、`arkime_stats-*`、`arkime_users_v1` 等）。
+
+在宿主机执行：
+
+curl -u admin:CHANGEMee123! http://127.0.0.1:9200/_cat/indices?v`
+
+如果输出中包含 `arkime_*` 开头的索引，说明初始化成功。
+1️⃣ 确认已有用户
+----------
+
+尝试查询 `arkime_users_v30` 索引：
+
+`curl -u admin:CHANGEMee123! "http://127.0.0.1:9200/arkime_users_v30/_search?pretty"`
+
+如果返回内容中含有：
+
+json
+
+
+`{   "_source" : {     "userId" : "admin",     "userName" : "Administrator",     "roles" : ["admin"]   } }`
+
+说明账户已创建
+
+
+
+
 full list of options:
+
 
 [//]: <> (start of command line options)
 ```
