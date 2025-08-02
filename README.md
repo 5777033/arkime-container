@@ -474,7 +474,7 @@ general:
 `arkime-supervisor` can pass on a user-provided `ini` config file to the container, something like this:
 
 ```sh
-docker run -it --rm -v $PWD/config.ini:/opt/arkime/etc/config.ini -v /opt/arkime/raw:/opt/arkime/raw --net host ghcr.io/mosajjal/arkime-container:latest  --configPath=/opt/arkime/etc/config.ini
+docker build -t arkime-container:v5.4 .
 ```
 
 *IMPORTANT NOTE*: current implementation does not support anything otuside the `[default]` section for the `.ini` file and will throw an error if there's anything else other than the `[default]` section is present. 
@@ -484,18 +484,30 @@ docker run -it --rm -v $PWD/config.ini:/opt/arkime/etc/config.ini -v /opt/arkime
 `arkime-supervisor` also supports command line arguments as well as Environment variables to set most common commands into an Arkime-compatible `.ini` file on container's startup, so the user won't have to deal with managing an extra `ini` file dynamically.
 
 ```sh
-docker run -it --rm \
-  --volume /data/moloch/raw:/opt/arkime/raw \
+docker run -d \
   --net host \
-  ghcr.io/mosajjal/arkime-container:latest \
-  --passwordSecret=Passw0rd \
-  --elasticsearch=http://192.168.11.11:9200 \
-  --interface=lo \
+  --name arkime \
+  --volume ./data/raw:/opt/arkime/raw \
+  --volume ./data/etc/config.ini:/opt/arkime/etc/config.ini:ro \
+  arkime-container:v5.4 \
+  --passwordSecret=admin12345 \
+  --elasticsearch=http://localhost:9200 \
+  --interface=any \
+  --viewPort=8006 \
+  --viewHost=0.0.0.0 \
   --createAdminUser=true
 ```
 
 
 by default, `arkime-supervisor` will download 4 files on startup: `ipv4-address-space.csv`, `manuf`, `GeoLite2-Country.mmdb` and `GeoLite2-ASN.mmdb`. `ipv4-address-space.csv`, `manuf` are considered static and not subject to many changes, so `arkime-supervisor` will not try to keep them up to date automatically, but `GeoLite2-Country.mmdb` and `GeoLite2-ASN.mmdb` can be re-fetched by setting geoLiteRefreshInterval to any positive time duration. Default is 1 week (168 hours). 
 
+
+
+
 `arkime-supervisor` will check on viewer and capture process every 5 seconds to see if they're still running and if they've exited, it tries to restart them. 
+
+Add User
+```sh
+docker exec -it arkime /opt/arkime/bin/arkime_add_user.sh jensen "Jensen User" Jensen@2030 --admin
+```
 
