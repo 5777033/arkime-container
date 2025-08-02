@@ -97,7 +97,7 @@ docker run -d \
   --passwordSecret=admin12345 \
   --elasticsearch=http://localhost:9200 \
   --interface=any \
-  --viewPort=8006 \
+  --viewPort=8005 \
   --viewHost=0.0.0.0 \
   --createAdminUser=true
 ```
@@ -105,14 +105,70 @@ docker run -d \
 
 by default, `arkime-supervisor` will download 4 files on startup: `ipv4-address-space.csv`, `manuf`, `GeoLite2-Country.mmdb` and `GeoLite2-ASN.mmdb`. `ipv4-address-space.csv`, `manuf` are considered static and not subject to many changes, so `arkime-supervisor` will not try to keep them up to date automatically, but `GeoLite2-Country.mmdb` and `GeoLite2-ASN.mmdb` can be re-fetched by setting geoLiteRefreshInterval to any positive time duration. Default is 1 week (168 hours). 
 
+##initial DB  && Add User
+```sh
+/opt/arkime/db/db.pl http://localhost:9200 init
+/opt/arkime/bin/arkime_add_user.sh jensen "Jensen User" Jensen@2030 --admin
+
+#Docker Compose Deploy
+mkdir -p data/{etc,raw}
+touch data/etc/config.ini
+chmod -R 777 data
+
+```sh
+version: '3.8'
+services:
+  elasticsearch:
+    image: opensearchproject/opensearch:2.18.0
+    volumes:
+      - esdata:/usr/share/opensearch/data
+    environment:
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - thread_pool.search.queue_size=5000
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+      - "OPENSEARCH_JAVA_OPTS=-Xms${ELASTIC_MEMORY_SIZE} -Xmx${ELASTIC_MEMORY_SIZE}"
+    restart: always
+    ports:
+      - 9200:9200
+        #- 127.0.0.1:9200:9200
+    healthcheck:
+      test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:9200/ || exit 1
+      retries: 5
+      timeout: 10s
+      start_interval: 30s
+      start_period: 5m
+      interval: 10s
+  arkime:
+    image: arkime-container:v5.4
+    container_name: arkime
+    network_mode: "host"
+    volumes:
+      - ./data/raw:/opt/arkime/raw
+      - ./data/etc/config.ini:/opt/arkime/etc/config.ini:ro
+    command:
+      - --passwordSecret=admin12345
+      - --elasticsearch=http://localhost:9200
+      - --interface=any
+      - --viewPort=8005
+      - --viewHost=0.0.0.0
+      - --createAdminUser=true
+    depends_on:
+      - elasticsearch
+volumes:
+  esdata:
+```
+
 
 
 
 `arkime-supervisor` will check on viewer and capture process every 5 seconds to see if they're still running and if they've exited, it tries to restart them. 
 
-Add User
+initial DB  && Add User
 ```sh
-docker exec -it arkime /opt/arkime/bin/arkime_add_user.sh test "Test User" test123 --admin
+/opt/arkime/db/db.pl http://localhost:9200 init
+/opt/arkime/bin/arkime_add_user.sh jensen "Jensen User" Jensen@2030 --admin
 ```
 full list of options:
 
