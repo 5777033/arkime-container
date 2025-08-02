@@ -107,6 +107,7 @@ by default, `arkime-supervisor` will download 4 files on startup: `ipv4-address-
 
 ##initial DB  && Add User
 ```sh
+docker exec -it arkime bash
 /opt/arkime/db/db.pl http://localhost:9200 init
 /opt/arkime/bin/arkime_add_user.sh jensen "Jensen User" Jensen@2030 --admin
 
@@ -167,6 +168,7 @@ volumes:
 
 initial DB  && Add User
 ```sh
+docker-compose exec -it arkime bash
 /opt/arkime/db/db.pl http://localhost:9200 init
 /opt/arkime/bin/arkime_add_user.sh jensen "Jensen User" Jensen@2030 --admin
 ```
